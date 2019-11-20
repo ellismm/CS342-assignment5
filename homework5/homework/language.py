@@ -1,5 +1,6 @@
 from .models import LanguageModel, AdjacentLanguageModel, Bigram, load_model
 from . import utils
+import torch
 
 
 def log_likelihood(model: LanguageModel, some_text: str):
@@ -14,6 +15,15 @@ def log_likelihood(model: LanguageModel, some_text: str):
     :param some_text:
     :return: float
     """
+    likelihood = 0.0
+    x = model.predict_all(some_text)
+    r = utils.one_hot(some_text)
+    for i in range(r.shape[0]):
+        for j in range(r.shape[1]):
+            item = r[i][j]
+            if(item == 1):
+                likelihood += x[i][j]
+    return likelihood
     raise NotImplementedError('log_likelihood')
 
 
@@ -28,6 +38,32 @@ def sample_random(model: LanguageModel, max_length: int = 100):
     :param max_length: The maximum sentence length
     :return: A string
     """
+    # text = some
+    # x = model.predict_all("")
+    # print(x)
+    # rad
+    text = ""
+    # for()
+
+    # for i in range(x.shape[0]):
+    #         item = x[i]
+
+    #         # print(x.shape[0])
+    #         if(item > likliest):
+    #             likliest = item
+    #             index = i
+
+    # text += utils.vocab[index]
+    while(len(text) < max_length):
+        index = 0;
+        x = model.predict_all(text)[:,-1]
+
+        index = torch.distributions.Categorical(logits=x).sample()
+
+        text += utils.vocab[index]
+        if text[len(text) - 1] == '.':
+            break
+    return text
     raise NotImplementedError('sample_random')
 
 
@@ -55,7 +91,8 @@ class TopNHeap:
             heapreplace(self.elements, e)
 
 
-def beam_search(model: LanguageModel, beam_size: int, n_results: int = 10, max_length: int = 100, average_log_likelihood: bool = False):
+def beam_search(model: LanguageModel, beam_size: int, n_results: int = 10, 
+    max_length: int = 100, average_log_likelihood: bool = False):
     """
     Your code here
 
@@ -71,6 +108,27 @@ def beam_search(model: LanguageModel, beam_size: int, n_results: int = 10, max_l
                                    This option favors longer strings.
     :return: A list of strings of size n_results
     """
+    def findLikelihood(m: LanguageModel, some_text: str):
+        likelihood = []
+        x = model.predict_all(some_text)
+        r = utils.one_hot(some_text)
+        for i in range(r.shape[0]):
+            for j in range(r.shape[1]):
+                item = r[i][j]
+                if(item == 1):
+                    likelihood.append(x[i][j])
+        return likelihood.mean()
+
+
+    beam = TopNHeap(beam_size)
+
+    print(beam_size)
+    print(average_log_likelihood)
+    result = []
+    for i in range(n_results):
+        result.append(sample_random(model, max_length))
+    return result
+
     raise NotImplementedError('beam_search')
 
 
